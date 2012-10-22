@@ -51,13 +51,13 @@ json_parse_config_space_field(json_object *jvalue,
     if (strlen(size) != 1 ||
         (size[0] != '1' && size[0] != '2' && size[0] != '4'))
     {
-        printf("size %s not good\n", size);
+        fprintf(stderr, "size %s not good\n", size);
         return NULL;
     }
 
     if (mask != NULL && strlen(mask) != 8)
     {
-        printf("mask %s not good\n", mask);
+        fprintf(stderr, "mask %s not good\n", mask);
         return NULL;
     }
 
@@ -78,23 +78,17 @@ json_parse_quirk_config_space_fields(json_object *jquirk)
         return NULL;
 
     int len = json_object_array_length(jarray);
-    printf("found %d potential config space addresses to allow\n", len);
 
-    json_object *jvalue;
-    json_type type;
     for (int i = 0; i < len; ++i)
     {
-        jvalue = json_object_array_get_idx(jarray, i);
-        type = json_object_get_type(jvalue);
+        json_object *jvalue = json_object_array_get_idx(jarray, i);
+        enum json_type type = json_object_get_type(jvalue);
 
-        if (type != json_type_object)
-        {
-            printf("field #%d is not an object, skipping it...\n", i);
+        // If this is not the expected type, skip it
+        if (json_type_object != type)
             break;
-        }
 
         result = json_parse_config_space_field(jvalue, result);
-
     }
 
     return result;
@@ -109,19 +103,15 @@ json_parse_quirk(json_object *jquirk, pci_device_quirk *quirks_list)
     char *subvendor = json_parse_string_field(jquirk, "subvendor", "ffff");
     char *subdevice = json_parse_string_field(jquirk, "subdevice", "ffff");
 
-    // FIXME : help the user to figure out what his error is
-    // He probably doesn't deserve it, but let's not be rude
     if (strlen(vendor) != 4 || strlen(device) != 4 ||
         strlen(subvendor) != 4 || strlen(subdevice) != 4)
         return NULL;
 
     pci_device_field *config_space_fields = json_parse_quirk_config_space_fields(jquirk);
 
+    // no space fields found, skipping that quirk
     if (NULL == config_space_fields)
-    {
-        printf("no space fields found...not adding that quirk\n");
         return quirks_list;
-    }
 
     return pci_device_quirk_add(quirks_list, name, device, vendor, subvendor,
                                 subdevice, config_space_fields);
@@ -133,20 +123,14 @@ json_parse_quirks_array(json_object *quirks_array)
     int len = json_object_array_length(quirks_array);
     pci_device_quirk *quirks = NULL;
 
-    printf("found %d potential quirks to add...\n", len);
-
-    json_object *jvalue;
-    enum json_type type;
     for (int i = 0; i < len; ++i)
     {
-        jvalue = json_object_array_get_idx(quirks_array, i);
-        type = json_object_get_type(jvalue);
+        json_object *jvalue = json_object_array_get_idx(quirks_array, i);
+        enum json_type type = json_object_get_type(jvalue);
 
+        // if quirk is not an object as expected, skip it
         if (type != json_type_object)
-        {
-            printf("quirk #%d is not an object, skipping it...\n", i);
             break;
-        }
 
         quirks = json_parse_quirk(jvalue, quirks);
     }
@@ -158,35 +142,35 @@ pci_device_quirk*
 parse_json_file(const char *json_file)
 {
     struct stat st;
-    int res;
-    char *json_str;
-    json_object *jobj;
-    enum json_type type;
-    FILE *f;
-
-    res = stat(json_file, &st);
-    if (res == -1)
+    int res = stat(json_file, &st);
+    if (-1 == res)
     {
-        printf("bad file, bad !\n");
+        perror(json_file);
         return NULL;
     }
 
-    json_str = malloc(st.st_size * sizeof (char));
-    f = fopen(json_file, "r");
+    char *json_str = malloc(st.st_size * sizeof (char));
+    FILE *f = fopen(json_file, "r");
+    if (NULL == f)
+    {
+        perror(json_file);
+        return NULL;
+    }
+
     fread(json_str, st.st_size, 1, f);
     fclose(f);
-    jobj = json_tokener_parse(json_str);
+    json_object *jobj = json_tokener_parse(json_str);
 
     if (is_error(jobj))
     {
-        printf("bad json bad !\n");
+        fprintf(stderr, "%s is not a valid json file\n", json_file);
         return NULL;
     }
 
-    type = json_object_get_type(jobj);
-    if (type != json_type_array)
+    enum json_type type = json_object_get_type(jobj);
+    if (json_type_array != type)
     {
-        printf("root node should be an array\n");
+        fprintf(stderr, "%s root not should be an array\n", json_file);
         return NULL;
     }
 

@@ -51,6 +51,28 @@ pci_device_quirk_add(pci_device_quirk *head, char *name,
     return head;
 }
 
+pci_dev_infos*
+pci_dev_infos_add(pci_dev_infos *head, unsigned int domain,
+                  unsigned int bus, unsigned int dev, int func)
+{
+    pci_dev_infos *new = malloc(sizeof(pci_dev_infos));
+    pci_dev_infos *runner = head;
+
+    new->domain = domain;
+    new->bus = bus;
+    new->dev = dev;
+    new->func = func;
+
+    if (NULL == head)
+        return new;
+
+    while (runner->next != NULL)
+        runner = runner->next;
+
+    runner->next = new;
+    return head;
+}
+
 static void
 pci_device_field_free(pci_device_field *head)
 {
@@ -85,6 +107,20 @@ pci_device_quirk_free(pci_device_quirk *head)
         free(head->subdevice);
         pci_device_field_free(head->fields);
 
+        free(head);
+        head = runner;
+    }
+}
+
+
+void
+pci_dev_infos_free(pci_dev_infos *head)
+{
+    pci_dev_infos *runner = NULL;
+
+    while (head)
+    {
+        runner = head->next;
         free(head);
         head = runner;
     }
