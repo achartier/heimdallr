@@ -6,15 +6,17 @@
 #include "json.h"
 #include "pci.h"
 
-#if 0
-# define PCIBACK_SLOTS_FILE  "/sys/bus/pci/drivers/pciback/slots"
-# define PCIBACK_QUIRKS_FILE "/sys/bus/pci/drivers/pciback/quirks"
-#else
+#define DEBUG
+
+#ifdef DEBUG
 # define PCIBACK_SLOTS_FILE  "/tmp/slots"
 # define PCIBACK_QUIRKS_FILE "/tmp/quirks"
+#else
+# define PCIBACK_SLOTS_FILE  "/sys/bus/pci/drivers/pciback/slots"
+# define PCIBACK_QUIRKS_FILE "/sys/bus/pci/drivers/pciback/quirks"
 #endif
 
-pci_dev_infos*
+static pci_dev_infos*
 get_pciback_devices(void)
 {
     FILE *file = fopen(PCIBACK_SLOTS_FILE, "r");
@@ -46,11 +48,13 @@ get_pciback_devices(void)
     return res;
 }
 
-static void
+static unsigned
 fill_device_with_quirks(FILE *f,
                         struct pci_dev *dev,
                         pci_device_quirk *quirks)
 {
+    unsigned nb_quirks = 0;
+
     for (; quirks; quirks = quirks->next)
     {
         uint16_t vendor = strtoul(quirks->vendor, NULL, 16);
@@ -72,22 +76,23 @@ fill_device_with_quirks(FILE *f,
         if (subdevice != 0xffff && subdevice != dev_subdevice)
             continue;
 
-        printf("match\n");
         struct pci_device_field *field = quirks->fields;
         for (; field; field = field->next)
         {
             uint32_t reg = strtoul(field->reg, NULL, 16);
             uint32_t size = field->size[0] - '0'; // we already tested that this field is correct
             uint32_t mask = strtoul(field->mask, NULL, 16);
-            printf("gonna write stuff\n");
             fprintf(f, "%04x:%02x:%02x:%01x-%08x:%d:%08x\n",
                     dev->domain, dev->bus, dev->dev, dev->func,
                     reg, size, mask);
+            ++nb_quirks;
         }
     }
+
+    return nb_quirks;
 }
 
-void
+static unsigned
 scan_all_pci_devices(pci_device_quirk *quirks,
                      pci_dev_infos    *pciback_devices)
 {
@@ -95,12 +100,14 @@ scan_all_pci_devices(pci_device_quirk *quirks,
     if (!f)
     {
         perror(PCIBACK_QUIRKS_FILE);
-        return;
+        return 0;
     }
 
 
     struct pci_access *pacc = pci_alloc();
     pci_init(pacc);
+
+    unsigned nb_quirks = 0;
 
     while (pciback_devices)
     {
@@ -109,17 +116,19 @@ scan_all_pci_devices(pci_device_quirk *quirks,
                                           pciback_devices->dev,
                                           pciback_devices->func);
 
-        fill_device_with_quirks(f, dev, quirks);
+        nb_quirks += fill_device_with_quirks(f, dev, quirks);
         pci_free_dev(dev);
         pciback_devices = pciback_devices->next;
     }
 
     pci_cleanup(pacc);
     fclose(f);
+
+    return nb_quirks;
 }
 
 
-void
+static void
 usage(void)
 {
     /* FIXME */
@@ -150,7 +159,8 @@ main(int argc, char **argv)
         fprintf(stderr, "No pciback device found.\n");
     }
 
-    scan_all_pci_devices(quirks, pciback_devices);
+    unsigned nb_quirks = scan_all_pci_devices(quirks, pciback_devices);
+    printf("Added a total of %u quirks to %s\n", nb_quirks, PCIBACK_QUIRKS_FILE);
 
     pci_device_quirk_free(quirks);
     pci_dev_infos_free(pciback_devices);

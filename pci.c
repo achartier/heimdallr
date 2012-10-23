@@ -62,6 +62,7 @@ pci_dev_infos_add(pci_dev_infos *head, unsigned int domain,
     new->bus = bus;
     new->dev = dev;
     new->func = func;
+    new->next = NULL;
 
     if (NULL == head)
         return new;
