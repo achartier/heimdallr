@@ -6,8 +6,6 @@
 #include "json.h"
 #include "pci.h"
 
-#define DEBUG
-
 #ifdef DEBUG
 # define PCIBACK_SLOTS_FILE  "/tmp/slots"
 # define PCIBACK_QUIRKS_FILE "/tmp/quirks"
@@ -157,6 +155,7 @@ main(int argc, char **argv)
     if (NULL == pciback_devices)
     {
         fprintf(stderr, "No pciback device found.\n");
+        return 3;
     }
 
     unsigned nb_quirks = scan_all_pci_devices(quirks, pciback_devices);
