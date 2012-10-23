@@ -44,7 +44,7 @@ json_parse_config_space_field(json_object *jvalue,
 
     if (strlen(reg) != 8)
     {
-        printf("reg %s not good\n", reg);
+        fprintf(stderr, "reg %s not good\n", reg);
         return NULL;
     }
 
@@ -103,9 +103,29 @@ json_parse_quirk(json_object *jquirk, pci_device_quirk *quirks_list)
     char *subvendor = json_parse_string_field(jquirk, "subvendor", "ffff");
     char *subdevice = json_parse_string_field(jquirk, "subdevice", "ffff");
 
-    if (strlen(vendor) != 4 || strlen(device) != 4 ||
-        strlen(subvendor) != 4 || strlen(subdevice) != 4)
+    if (strlen(vendor) != 4)
+    {
+        fprintf(stderr, "vendor field %s has an invalid size (expecting 4)", vendor);
         return NULL;
+    }
+
+    if (strlen(device) != 4)
+    {
+        fprintf(stderr, "device field %s has an invalid size (expecting 4)", device);
+        return NULL;
+    }
+
+    if (strlen(subvendor) != 4)
+    {
+        fprintf(stderr, "subvendor field %s has an invalid size (expecting 4)", subvendor);
+        return NULL;
+    }
+
+    if (strlen(subdevice) != 4)
+    {
+        fprintf(stderr, "subdevice field %s has an invalid size (expecting 4)", subdevice);
+        return NULL;
+    }
 
     pci_device_field *config_space_fields = json_parse_quirk_config_space_fields(jquirk);
 
