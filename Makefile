@@ -2,6 +2,7 @@ CC?=gcc
 FLAGS = -g -ggdb -std=c99 -pedantic -W -Wall -Wextra -Werror
 CFLAGS += $(FLAGS) $(shell pkg-config libpci --cflags) $(shell pkg-config json --cflags)
 LDFLAGS += $(shell pkg-config libpci --libs) $(shell pkg-config json --libs)
+DESTDIR ?= /usr/bin
 CFILES = main.c json.c pci.c
 BIN = heimdallr
 
@@ -23,5 +24,9 @@ distclean: clean
 
 depend: $(CFILES)
 	$(CC) $(FLAGS) -MM $^ > .depend
+
+install: $(BIN)
+	mkdir -p $(DESTDIR)
+	install -m 755 -o root -g root -t $(DESTDIR) $(BIN)
 
 -include .depend
