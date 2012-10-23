@@ -1,7 +1,7 @@
-CC=gcc
+CC?=gcc
 FLAGS = -g -ggdb -std=c99 -pedantic -W -Wall -Wextra -Werror
-CFLAGS= $(FLAGS) $(shell pkg-config libpci --cflags) $(shell pkg-config json --cflags)
-LDFLAGS = $(shell pkg-config libpci --libs) $(shell pkg-config json --libs)
+CFLAGS += $(FLAGS) $(shell pkg-config libpci --cflags) $(shell pkg-config json --cflags)
+LDFLAGS += $(shell pkg-config libpci --libs) $(shell pkg-config json --libs)
 CFILES = main.c json.c pci.c
 BIN = heimdallr
 
@@ -10,7 +10,7 @@ BIN = heimdallr
 all: $(BIN)
 
 $(BIN): $(CFILES:.c=.o)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(CFILES:.c=.o) -o $(BIN)
+	$(CC) $(CFLAGS) $(CFILES:.c=.o) -o $(BIN) $(LDFLAGS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $^
