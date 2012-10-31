@@ -61,7 +61,7 @@ fill_device_with_quirks(FILE *f,
             continue;
 
         uint16_t device = strtoul(quirks->device, NULL, 16);
-        if (device != 0xffff && vendor != dev->device_id)
+        if (device != 0xffff && device != dev->device_id)
             continue;
 
         /* Check subvendor/subdevice ids as well */
@@ -114,6 +114,7 @@ scan_all_pci_devices(pci_device_quirk *quirks,
                                           pciback_devices->bus,
                                           pciback_devices->dev,
                                           pciback_devices->func);
+        pci_fill_info(dev, PCI_FILL_IDENT);
 
         nb_quirks += fill_device_with_quirks(f, dev, quirks);
         pci_free_dev(dev);
