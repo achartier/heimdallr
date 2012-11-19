@@ -44,20 +44,20 @@ json_parse_config_space_field(json_object *jvalue,
 
     if (strlen(reg) != 8)
     {
-        fprintf(stderr, "reg %s not good\n", reg);
+        fprintf(stderr, "register field %s has an invalid size (expecting 8)\n", reg);
         return NULL;
     }
 
     if (strlen(size) != 1 ||
         (size[0] != '1' && size[0] != '2' && size[0] != '4'))
     {
-        fprintf(stderr, "size %s not good\n", size);
+        fprintf(stderr, "size field %s is invalid (expecting 1, 2 or 4)\n", size);
         return NULL;
     }
 
     if (mask != NULL && strlen(mask) != 8)
     {
-        fprintf(stderr, "mask %s not good\n", mask);
+        fprintf(stderr, "mask field %s has an invalid size (expecting 8)\n", mask);
         return NULL;
     }
 
@@ -190,7 +190,7 @@ parse_json_file(const char *json_file)
     enum json_type type = json_object_get_type(jobj);
     if (json_type_array != type)
     {
-        fprintf(stderr, "%s root not should be an array\n", json_file);
+        fprintf(stderr, "%s root node should be an array\n", json_file);
         return NULL;
     }
 
