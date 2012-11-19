@@ -55,7 +55,7 @@ json_parse_config_space_field(json_object *jvalue,
         return NULL;
     }
 
-    if (mask != NULL && strlen(mask) != 8)
+    if (strlen(mask) != 8)
     {
         fprintf(stderr, "mask field %s has an invalid size (expecting 8)\n", mask);
         return NULL;
