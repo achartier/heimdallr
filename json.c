@@ -86,7 +86,7 @@ json_parse_quirk_config_space_fields(json_object *jquirk)
 
         // If this is not the expected type, skip it
         if (json_type_object != type)
-            break;
+            continue;
 
         result = json_parse_config_space_field(jvalue, result);
     }
@@ -150,7 +150,7 @@ json_parse_quirks_array(json_object *quirks_array)
 
         // if quirk is not an object as expected, skip it
         if (type != json_type_object)
-            break;
+            continue;
 
         quirks = json_parse_quirk(jvalue, quirks);
     }
