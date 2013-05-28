@@ -169,7 +169,13 @@ parse_json_file(const char *json_file)
         return NULL;
     }
 
-    char *json_str = malloc(st.st_size * sizeof (char));
+    char *json_str = calloc(st.st_size + 1, sizeof (char));
+    if (NULL == json_str)
+    {
+        fprintf(stderr, "calloc for json file failed\n");
+        return NULL;
+    }
+
     FILE *f = fopen(json_file, "r");
     if (NULL == f)
     {
@@ -177,10 +183,15 @@ parse_json_file(const char *json_file)
         return NULL;
     }
 
-    fread(json_str, st.st_size, 1, f);
-    fclose(f);
-    json_object *jobj = json_tokener_parse(json_str);
+    if (fread(json_str, st.st_size, sizeof (char), f) <= 0)
+    {
+        fprintf(stderr, "fread for json file failed\n");
+        return NULL;
+    }
 
+    fclose(f);
+
+    json_object *jobj = json_tokener_parse(json_str);
     if (is_error(jobj))
     {
         fprintf(stderr, "%s is not a valid json file\n", json_file);
