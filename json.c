@@ -19,9 +19,10 @@ json_parse_string_field(json_object *jvalue,
                         const char *field_name,
                         const char *field_default_value)
 {
-    json_object *jfield = json_object_object_get(jvalue, field_name);
+    json_object *jfield = NULL;
+    json_bool jres = json_object_object_get_ex(jvalue, field_name, &jfield);
 
-    if (NULL == jfield || is_error(jfield))
+    if (NULL == jfield || is_error(jfield) || !jres)
         return strdup_or_null(field_default_value);
 
     if (!json_object_is_type(jfield, json_type_string))
@@ -68,8 +69,13 @@ json_parse_config_space_field(json_object *jvalue,
 static pci_device_field*
 json_parse_quirk_config_space_fields(json_object *jquirk)
 {
-    json_object *jarray = json_object_object_get(jquirk, "config_space_fields");
+    json_object *jarray = NULL;
     pci_device_field *result = NULL;
+
+    json_bool jres = json_object_object_get_ex(jquirk, "config_space_fields", &jarray);
+
+    if (!jres)
+        return NULL;
 
     if (NULL == jarray)
         return NULL;
