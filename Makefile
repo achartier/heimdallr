@@ -1,7 +1,7 @@
 CC?=gcc
 FLAGS = -g -ggdb -std=c99 -pedantic -W -Wall -Wextra -Werror
-CFLAGS += $(FLAGS) $(shell pkg-config libpci --cflags) $(shell pkg-config json --cflags)
-LDFLAGS += $(shell pkg-config libpci --libs) $(shell pkg-config json --libs)
+CFLAGS += $(FLAGS) $(shell pkg-config libpci --cflags) $(shell pkg-config json-c --cflags)
+LDFLAGS += $(shell pkg-config libpci --libs) $(shell pkg-config json-c --libs)
 DESTDIR ?= /usr/bin
 CFILES = main.c json.c pci.c
 BIN = heimdallr
